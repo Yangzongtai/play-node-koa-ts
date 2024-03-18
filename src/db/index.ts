@@ -2,7 +2,7 @@
  * @Author: Yongxin Donald
  * @Date: 2024-03-16 10:05:26
  * @LastEditors: Yongxin Donald
- * @LastEditTime: 2024-03-16 17:55:33
+ * @LastEditTime: 2024-03-18 11:30:33
  * @FilePath: \fontback\src\db\index.ts
  * @Description:
  * Copyright (c) 2024 by Donald/Yongxin, All Rights Reserved.
@@ -11,6 +11,7 @@
 import mysql, { Connection, RowDataPacket } from "mysql2/promise";
 import { Context } from "koa";
 import { validNull } from "../utils";
+import jwt = require("jsonwebtoken");
 
 const connectionConfig = {
   host: "localhost",
@@ -185,5 +186,92 @@ export async function newRegister(params: UserInfo, ctx: Context) {
       msg: "注册成功",
       code: 200,
     };
-  } catch (error) {}
+  } catch (error) {
+  } finally {
+    await connection.end();
+  }
+}
+
+interface LoginParams {
+  username: string;
+  password: string;
+  email?: string;
+}
+const secretKey = "yang998"; // token的秘钥
+export async function UserLogin(params: LoginParams, ctx: Context) {
+  console.log("登录的参数", params);
+  // 获取传入的字段数据
+  const { username, password } = params;
+  // 空字段存放
+  let emptyKey: any[] = [];
+  emptyKey.push(
+    validNull("username", username),
+    validNull("password", password)
+  );
+  emptyKey = emptyKey.filter((item) => item !== "");
+  if (emptyKey.length) {
+    // 必填字段，不填报错
+    ctx.body = {
+      status: "error",
+      msg: `${emptyKey.join()} 为必填字段!`,
+      code: 1003,
+    };
+    return;
+  }
+
+  // 创建连接
+  const connection: Connection = await mysql.createConnection(connectionConfig);
+  //先查找用户存在
+  const [rows]: [RowDataPacket[], unknown] = await connection.execute(
+    "select * from uses where username like ?",
+    [`%${params.username}%`]
+  );
+  console.log("查到的用户", rows);
+  if (!rows || !rows.length) {
+    return (ctx.body = {
+      status: "error",
+      message: "该用户不存在!",
+      code: 1001,
+    });
+  }
+  if (rows[0].password !== password) {
+    return (ctx.body = {
+      status: "error",
+      message: "用户密码错误!",
+      code: 1003,
+    });
+  }
+  const userId = rows[0].id;
+  const token = jwt.sign({ userId: userId }, secretKey, { expiresIn: "1h" });
+  console.log("生成的token", token);
+  ctx.body = {
+    status: "success",
+    msg: "登录成功",
+    data: {
+      ...rows[0],
+      token,
+    },
+    code: 200,
+  };
+
+  await connection.end();
+}
+
+// 查所有用户
+export async function UserLists(params: any, ctx: Context) {
+  console.log("登录的参数", params);
+  // 获取传入的字段数据
+  const page = params.page || 1;
+  const pagesize = params.pagesize || 10;
+  const offset = (page - 1) * pagesize;
+  // 创建连接
+  const connection: Connection = await mysql.createConnection(connectionConfig);
+  //先查找用户存在
+  const [rows]: [RowDataPacket[], unknown] = await connection.execute(
+    `select * from uses limit ${pagesize} offset ${offset}`
+  );
+  console.log("查到的用户", rows);
+  ctx.body = rows
+
+  await connection.end();
 }
