@@ -2,7 +2,7 @@
  * @Author: Yongxin Donald
  * @Date: 2024-03-16 17:11:13
  * @LastEditors: Yongxin Donald
- * @LastEditTime: 2024-03-16 17:15:12
+ * @LastEditTime: 2024-03-18 08:24:05
  * @FilePath: \fontback\README.md
  * @Description: 
  * Copyright (c) 2024 by Donald/Yongxin, All Rights Reserved.
@@ -22,3 +22,5 @@ project-folder/
 ├── tsconfig.json          // TypeScript配置文件
 ├── .gitignore             // Git忽略文件配置
 ├── README.md              // 项目说明文档
+
+[![Anurag's GitHub stats](https://github-readme-stats.vercel.app/api?username=Yangzongtai)](https://github.com/Yangzongtai/github-readme-stats)
