@@ -1,8 +1,8 @@
 /*
  * @Author: Yongxin Donald
  * @Date: 2024-03-16 10:05:26
- * @LastEditors: Yongxin Donald
- * @LastEditTime: 2024-03-18 11:30:33
+ * @LastEditors: yzt
+ * @LastEditTime: 2024-07-02 16:37:18
  * @FilePath: \fontback\src\db\index.ts
  * @Description:
  * Copyright (c) 2024 by Donald/Yongxin, All Rights Reserved.
@@ -268,10 +268,10 @@ export async function UserLists(params: any, ctx: Context) {
   const connection: Connection = await mysql.createConnection(connectionConfig);
   //先查找用户存在
   const [rows]: [RowDataPacket[], unknown] = await connection.execute(
-    `select * from uses limit ${pagesize} offset ${offset}`
+    `select id,username,email,DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at,DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') as updated_at from uses limit ${pagesize} offset ${offset}`
   );
   console.log("查到的用户", rows);
-  ctx.body = rows
+  ctx.body = rows;
 
   await connection.end();
 }
