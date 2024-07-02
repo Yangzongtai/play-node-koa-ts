@@ -2,7 +2,7 @@
  * @Author: Yongxin Donald
  * @Date: 2024-03-16 08:36:13
  * @LastEditors: Yongxin Donald
- * @LastEditTime: 2024-03-18 11:43:53
+ * @LastEditTime: 2024-03-18 15:53:29
  * @FilePath: \fontback\src\router\login\index.ts
  * @Description:
  * Copyright (c) 2024 by Donald/Yongxin, All Rights Reserved.
@@ -79,7 +79,7 @@ router.post("/newregister", async (ctx: Context) => {
   }
 });
 
-// 登录
+// 登录-- 获取token
 router.post("/login", async (ctx: Context) => {
   try {
     const params: any = ctx.request.body;

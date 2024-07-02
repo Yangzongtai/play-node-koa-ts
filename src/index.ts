@@ -2,14 +2,14 @@
  * @Author: Yongxin Donald
  * @Date: 2024-03-16 08:36:13
  * @LastEditors: Yongxin Donald
- * @LastEditTime: 2024-03-18 15:21:22
+ * @LastEditTime: 2024-03-18 16:07:51
  * @FilePath: \fontback\src\index.ts
  * @Description:
  * Copyright (c) 2024 by Donald/Yongxin, All Rights Reserved.
  */
 import Koa, { Context } from "koa"; // @types/koa
 import bodyParser from "koa-bodyparser";
-import koaCors from 'koa-cors'
+import KoaCors from "koa2-cors";
 import router from "./router";
 import verifyToken from "./utils/verifyToken";
 import koaBody from "koa-body";
@@ -18,6 +18,7 @@ import fs from "fs";
 
 const app: Koa = new Koa();
 
+// token 拦截校验
 app.use(async (ctx: Context, next: Koa.Next) => {
   // ctx.body = '-'
   console.log("目标", ctx.url);
@@ -69,7 +70,8 @@ app.use(
   })
 );
 
-app.use(koaCors())
+// 后端解决跨域
+app.use(KoaCors()); // 也可以设置 ctx.set({Access-Control-Allow-Origin: "*" })
 app.use(bodyParser());
 app.use(router.routes());
 app.use(router.allowedMethods());
