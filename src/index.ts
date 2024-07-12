@@ -2,7 +2,7 @@
  * @Author: Yongxin Donald
  * @Date: 2024-03-16 08:36:13
  * @LastEditors: yzt
- * @LastEditTime: 2024-07-02 17:45:52
+ * @LastEditTime: 2024-07-11 13:40:00
  * @FilePath: \fontback\src\index.ts
  * @Description:
  * Copyright (c) 2024 by Donald/Yongxin, All Rights Reserved.
@@ -20,9 +20,11 @@ const app: Koa = new Koa();
 
 // token 拦截校验
 app.use(async (ctx: Context, next: Koa.Next) => {
+  ctx.set("Access-Control-Allow-Origin", "*");
+  ctx.set("Access-Control-Allow-Headers", "*");
   // ctx.body = '-'
   console.log("目标", ctx.url);
-  const excludeUrl = ["/login/newregister", "/login/login"];
+  const excludeUrl = ["/login/newregister", "/login/login", "/"];
   if (excludeUrl.includes(ctx.url)) return await next();
   const { status } = verifyToken(ctx.req, ctx.res, next, ctx);
   console.log("stats", status);
@@ -31,7 +33,7 @@ app.use(async (ctx: Context, next: Koa.Next) => {
     ctx.body = {
       status: "error",
       msg: "Token is invalid",
-      code: 1001,
+      code: 401,
     };
     return;
   }
@@ -78,7 +80,13 @@ app.use(
 );
 
 // 后端解决跨域
-app.use(KoaCors()); // 也可以设置 ctx.set({Access-Control-Allow-Origin: "*" })
+app.use(
+  KoaCors({
+    origin: "*",
+    credentials: false,
+    allowMethods: ["GET", "POST"],
+  })
+); // 也可以设置 ctx.set({Access-Control-Allow-Origin: "*" })
 app.use(bodyParser());
 app.use(router.routes());
 app.use(router.allowedMethods());

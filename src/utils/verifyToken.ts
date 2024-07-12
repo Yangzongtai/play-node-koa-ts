@@ -1,8 +1,8 @@
 /*
  * @Author: Yongxin Donald
  * @Date: 2024-03-18 09:16:45
- * @LastEditors: Yongxin Donald
- * @LastEditTime: 2024-03-18 11:03:41
+ * @LastEditors: yzt
+ * @LastEditTime: 2024-07-11 14:59:16
  * @FilePath: \fontback\src\utils\verifyToken.ts
  * @Description:
  * Copyright (c) 2024 by Donald/Yongxin, All Rights Reserved.
@@ -35,7 +35,7 @@ function verifyToken(req: any, res: any, next: Koa.Next, ctx: Context) {
       code: 200,
     };
   });
-  return verify
+  return verify;
 }
 
 export default verifyToken;

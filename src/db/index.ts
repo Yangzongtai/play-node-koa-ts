@@ -2,7 +2,7 @@
  * @Author: Yongxin Donald
  * @Date: 2024-03-16 10:05:26
  * @LastEditors: yzt
- * @LastEditTime: 2024-07-02 16:37:18
+ * @LastEditTime: 2024-07-11 11:57:14
  * @FilePath: \fontback\src\db\index.ts
  * @Description:
  * Copyright (c) 2024 by Donald/Yongxin, All Rights Reserved.
@@ -223,7 +223,7 @@ export async function UserLogin(params: LoginParams, ctx: Context) {
   const connection: Connection = await mysql.createConnection(connectionConfig);
   //先查找用户存在
   const [rows]: [RowDataPacket[], unknown] = await connection.execute(
-    "select * from uses where username like ?",
+    "select id,username,password,email,DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at,DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') as updated_at from uses where username like ?",
     [`%${params.username}%`]
   );
   console.log("查到的用户", rows);
@@ -244,6 +244,7 @@ export async function UserLogin(params: LoginParams, ctx: Context) {
   const userId = rows[0].id;
   const token = jwt.sign({ userId: userId }, secretKey, { expiresIn: "1h" });
   console.log("生成的token", token);
+  delete rows[0].password;
   ctx.body = {
     status: "success",
     msg: "登录成功",
@@ -253,13 +254,18 @@ export async function UserLogin(params: LoginParams, ctx: Context) {
     },
     code: 200,
   };
+  // 更新用户登录时间
+  await connection.execute(
+    "update uses set logined_at = now() where id = ?",
+    [userId]
+  )
 
   await connection.end();
 }
 
 // 查所有用户
 export async function UserLists(params: any, ctx: Context) {
-  console.log("登录的参数", params);
+  console.log("参数", params);
   // 获取传入的字段数据
   const page = params.page || 1;
   const pagesize = params.pagesize || 10;
@@ -271,7 +277,12 @@ export async function UserLists(params: any, ctx: Context) {
     `select id,username,email,DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at,DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') as updated_at from uses limit ${pagesize} offset ${offset}`
   );
   console.log("查到的用户", rows);
-  ctx.body = rows;
+  ctx.body = {
+    status: "success",
+    msg: "查询成功",
+    data: rows,
+    code: 200,
+  };
 
   await connection.end();
 }

@@ -1,8 +1,8 @@
 /*
  * @Author: Yongxin Donald
  * @Date: 2024-03-16 08:36:13
- * @LastEditors: Yongxin Donald
- * @LastEditTime: 2024-03-18 15:53:29
+ * @LastEditors: yzt
+ * @LastEditTime: 2024-07-11 11:59:01
  * @FilePath: \fontback\src\router\login\index.ts
  * @Description:
  * Copyright (c) 2024 by Donald/Yongxin, All Rights Reserved.
@@ -92,9 +92,16 @@ router.post("/login", async (ctx: Context) => {
 });
 
 router.get("/list", async (ctx: Context) => {
-  const params: any = ctx.query;
-  console.log("参数 =", params);
-  await UserLists(params, ctx);
+  try {
+    const params: any = ctx.query;
+    console.log("参数 =", params);
+    await UserLists(params, ctx);
+  } catch (error) {
+    ctx.body = {
+      code: 500,
+      msg: "Internal server error",
+    };
+  }
 });
 
 export default router;
