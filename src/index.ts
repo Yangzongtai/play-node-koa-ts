@@ -2,7 +2,7 @@
  * @Author: Yongxin Donald
  * @Date: 2024-03-16 08:36:13
  * @LastEditors: yzt
- * @LastEditTime: 2024-07-11 13:40:00
+ * @LastEditTime: 2025-03-12 21:34:29
  * @FilePath: \fontback\src\index.ts
  * @Description:
  * Copyright (c) 2024 by Donald/Yongxin, All Rights Reserved.
@@ -15,8 +15,12 @@ import verifyToken from "./utils/verifyToken";
 import koaBody from "koa-body";
 import path from "path";
 import fs from "fs";
-
+import koaStatic from "koa-static";
 const app: Koa = new Koa();
+
+// 提供静态文件访问
+app.use(koaStatic(path.resolve(__dirname, "../public")));
+// 前端使用的静态地址是http://localhost:8888/public/uploads/images/
 
 // token 拦截校验
 app.use(async (ctx: Context, next: Koa.Next) => {
@@ -24,7 +28,7 @@ app.use(async (ctx: Context, next: Koa.Next) => {
   ctx.set("Access-Control-Allow-Headers", "*");
   // ctx.body = '-'
   console.log("目标", ctx.url);
-  const excludeUrl = ["/login/newregister", "/login/login", "/"];
+  const excludeUrl = ["/login/newregister", "/login/login", "/", "/upload/file",'/^/public/uploads/'];
   if (excludeUrl.includes(ctx.url)) return await next();
   const { status } = verifyToken(ctx.req, ctx.res, next, ctx);
   console.log("stats", status);
@@ -42,6 +46,7 @@ app.use(async (ctx: Context, next: Koa.Next) => {
     msg: "Token is success",
     code: 200,
   };
+  console.log("ctx.body", ctx.body);
   await next();
 });
 
@@ -52,7 +57,7 @@ app.use(
     patchKoa: true,
     formidable: {
       keepExtensions: true, // 保留文件后缀
-      uploadDir: path.resolve(__dirname, "../public/uploads"),
+      uploadDir: path.resolve(__dirname, "../public/uploads/"),
       maxFieldsSize: 10 * 1024 * 1024, // 文件大小
       onFileBegin: (name, file) => {
         console.log("上传的", name, file);
@@ -79,6 +84,23 @@ app.use(
   })
 );
 
+// 返回上传的文件地址
+app.use(async (ctx: Context, next: Koa.Next) => {
+  if (ctx.method === 'POST' && ctx.url === '/upload/file') {
+    
+    const file = ctx.request.files?.file as any;
+    const filename = path.basename(file.filepath);
+    const protocol = ctx.request.protocol;
+    const host = ctx.request.host;
+    
+    ctx.body = {
+      url: `${protocol}://${host}/uploads/images/${filename}`,
+    };
+    // await next();
+  } else {
+    await next();
+  }
+});
 // 后端解决跨域
 app.use(
   KoaCors({
@@ -91,6 +113,6 @@ app.use(bodyParser());
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-app.listen(3000, () => {
-  console.log("This server is running on http://localhost:3000");
+app.listen(8888, () => {
+  console.log("This server is running on http://localhost:8888");
 });

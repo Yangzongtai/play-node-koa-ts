@@ -13,12 +13,14 @@ import { Context } from "vm";
 const router: Router = new Router();
 import login from "./login";
 import upload from "./upload";
+import admin from "./admin";
 
 router.get("/", async (ctx: Context) => {
   ctx.body = "//";
 });
 router.use("/login", login.routes());
 router.use("/upload", upload.routes());
+router.use("/admin", admin.routes());
 
 // module.exports = router
 export default router;

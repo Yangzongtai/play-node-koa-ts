@@ -2,7 +2,7 @@
  * @Author: Yongxin Donald
  * @Date: 2024-03-16 10:05:26
  * @LastEditors: yzt
- * @LastEditTime: 2024-07-11 11:57:14
+ * @LastEditTime: 2025-03-24 22:11:42
  * @FilePath: \fontback\src\db\index.ts
  * @Description:
  * Copyright (c) 2024 by Donald/Yongxin, All Rights Reserved.
@@ -15,7 +15,7 @@ import jwt = require("jsonwebtoken");
 
 const connectionConfig = {
   host: "localhost",
-  user: "superY",
+  user: "root",
   password: "yang",
   database: "testdb",
 };
@@ -44,51 +44,97 @@ export async function queryUsers(params: ReqParams): Promise<RowDataPacket[]> {
   return rows;
 }
 
-interface User {
-  name: string;
-  age?: number;
-}
 // 添加一条
-export async function RegisterUser(params: User, ctx: Context): Promise<any> {
+export async function RegisterUser(params: any, ctx: Context): Promise<any> {
   const connection: Connection = await mysql.createConnection(connectionConfig);
   try {
-    // 先查询是否已存在
+    // 先查询是否已存在, 查看手机号是否已存在
     const [rows]: [RowDataPacket[], unknown] = await connection.execute(
-      "select * from users where name=?",
-      [params.name]
+      "select * from users where username=? or phone=?",
+      [params.username || '', params.phone || '']
     );
     console.log("查找到的", rows);
 
     if (rows && rows.length) {
       ctx.body = {
         status: "error",
-        msg: "用户已存在!",
+        message: "用户已存在!",
         code: 400,
       };
       return;
     }
+    Object.entries(params).map(([key, value]) => [key, value === undefined ? null : value])
     // 不存在就插入
-    await connection.execute("insert into users (name, age) values (?, ?)", [
-      params.name,
-      params.age,
+    await connection.execute("insert into users (username, avatarUrl, sex, password, email, phone, nickname, role, address) values (?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+      params.username,
+      params.avatarUrl || '',
+      params.sex,
+      params.password || '123456',
+      params.email || '',
+      params.phone || '',
+      params.nickname || '',
+      params.role || '',
+      params.address || ''
     ]);
     const [user]: [RowDataPacket[], unknown] = await connection.execute(
-      "select * from users where name=?",
-      [params.name]
+      "select * from users where username=?",
+      [params.username]
     );
     ctx.body = {
       status: "success",
-      msg: "注册成功",
+      message: "新增成功",
       data: user[0],
       code: 200,
     };
   } catch (error: any) {
+    console.log("error****", error);
     ctx.body = {
       status: "error",
-      msg: error.message,
+      message: error.message,
       code: error.errno || 400,
     };
     return error;
+  } finally {
+    await connection.end();
+  }
+}
+// 编辑用户
+export async function EditUser(params: any, ctx: Context) {
+  const connection: Connection = await mysql.createConnection(connectionConfig);
+  try {
+    // 查询是否存在
+    const [rows]: [RowDataPacket[], unknown] = await connection.execute(
+      "select * from users where id=?",
+      [params.id]
+    );
+    console.log("查到的", rows);
+    if (rows && rows.length) {
+      // 存在就更新
+      await connection.execute("update users set username=?, avatarUrl=?, sex=?, password=?, email=?, phone=?, nickname=?, role=?, address=? where id=?", [
+        params.username,
+        params.avatarUrl,
+        params.sex,
+        params.password,
+        params.email,
+        params.phone,
+        params.nickname,
+        params.role,
+        params.address,
+        params.id
+      ]);
+      ctx.body = {
+        status: "success",
+        message: "更新成功",
+        code: 200,
+      };
+    }
+  } catch (error: any) {
+    console.log("error***", error);
+    ctx.body = {
+      status: "error",
+      message: error.message,
+      code: error.errno || 400,
+    };
   } finally {
     await connection.end();
   }
@@ -103,14 +149,14 @@ export async function DeleteUser(params: { id: number }, ctx: Context) {
       "select * from users where id=?",
       [params.id]
     );
-
+    console.log("查到的", rows);
     if (rows && rows.length) {
       // 存在就删除
       await connection.execute("delete from users where id=?", [params.id]);
 
       ctx.body = {
         status: "success",
-        msg: "删除成功",
+        message: "删除成功",
         code: 200,
       };
       return;
@@ -118,13 +164,14 @@ export async function DeleteUser(params: { id: number }, ctx: Context) {
 
     ctx.body = {
       status: "error",
-      msg: "用户不存在!",
+      message: "用户不存在!",
       code: 400,
     };
   } catch (error: any) {
+    console.log("error***", error);
     ctx.body = {
       status: "error",
-      msg: error.message,
+      message: error.message,
       code: error.errno || 400,
     };
     return error;
@@ -157,7 +204,7 @@ export async function newRegister(params: UserInfo, ctx: Context) {
       // 必填字段，不填报错
       ctx.body = {
         status: "error",
-        msg: `${emptyKey.join()} 为必填字段!`,
+        message: `${emptyKey.join()} 为必填字段!`,
         code: 1003,
       };
       return;
@@ -165,25 +212,25 @@ export async function newRegister(params: UserInfo, ctx: Context) {
 
     // 查询是否存在
     const [rows]: [RowDataPacket[], unknown] = await connection.execute(
-      "select * from uses where username like ?",
+      "select * from users where username like ?",
       [`%${params.username}%`]
     );
     if (rows && rows.length) {
       ctx.body = {
         status: "error",
-        msg: "不可重复注册!",
+        message: "不可重复注册!",
         code: 400,
       };
       return;
     }
     // 到这里就执行注册
     await connection.execute(
-      "insert into uses (username, password, email) values(?, ?, ?)",
+      "insert into users (username, password, email) values(?, ?, ?)",
       [username, password, email]
     );
     ctx.body = {
       status: "success",
-      msg: "注册成功",
+      message: "注册成功",
       code: 200,
     };
   } catch (error) {
@@ -213,7 +260,7 @@ export async function UserLogin(params: LoginParams, ctx: Context) {
     // 必填字段，不填报错
     ctx.body = {
       status: "error",
-      msg: `${emptyKey.join()} 为必填字段!`,
+      message: `${emptyKey.join()} 为必填字段!`,
       code: 1003,
     };
     return;
@@ -223,7 +270,10 @@ export async function UserLogin(params: LoginParams, ctx: Context) {
   const connection: Connection = await mysql.createConnection(connectionConfig);
   //先查找用户存在
   const [rows]: [RowDataPacket[], unknown] = await connection.execute(
-    "select id,username,password,email,DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at,DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') as updated_at from uses where username like ?",
+    // "select id,username,password,email,DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') as create_time,DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s') as update_time from users where username like ?",
+    // [`%${params.username}%`]
+    // 取出所有字段，格式化时间
+    "select *,DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') as create_time,DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s') as update_time,DATE_FORMAT(login_time, '%Y-%m-%d %H:%i:%s') as login_time from users where username like ?",
     [`%${params.username}%`]
   );
   console.log("查到的用户", rows);
@@ -247,7 +297,7 @@ export async function UserLogin(params: LoginParams, ctx: Context) {
   delete rows[0].password;
   ctx.body = {
     status: "success",
-    msg: "登录成功",
+    message: "登录成功",
     data: {
       ...rows[0],
       token,
@@ -256,7 +306,7 @@ export async function UserLogin(params: LoginParams, ctx: Context) {
   };
   // 更新用户登录时间
   await connection.execute(
-    "update uses set logined_at = now() where id = ?",
+    "update users set login_time = now() where id = ?",
     [userId]
   )
 
@@ -274,13 +324,56 @@ export async function UserLists(params: any, ctx: Context) {
   const connection: Connection = await mysql.createConnection(connectionConfig);
   //先查找用户存在
   const [rows]: [RowDataPacket[], unknown] = await connection.execute(
-    `select id,username,email,DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at,DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') as updated_at from uses limit ${pagesize} offset ${offset}`
+    `select id,username,email,DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') as create_time,DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s') as update_time from users limit ${pagesize} offset ${offset}`
   );
   console.log("查到的用户", rows);
   ctx.body = {
     status: "success",
-    msg: "查询成功",
+    message: "查询成功",
     data: rows,
+    code: 200,
+  };
+
+  await connection.end();
+}
+
+// 查所有用户
+export async function UserInfo(params: any, ctx: Context) {
+  console.log("参数", params);
+  // 获取传入的字段数据
+  const page = params.pageNum || 1;
+  const pagesize = params.pageSize || 10;
+  const nickname = params.nickname || "";
+  const phone = params.phone || "";
+  const offset = (page - 1) * pagesize;
+  // 创建连接
+  const connection: Connection = await mysql.createConnection(connectionConfig);
+  //先查找用户存在
+  // const [rows]: [RowDataPacket[], unknown] = await connection.execute(
+  //   `select *,DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') as create_time,DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s') as update_time,DATE_FORMAT(login_time, '%Y-%m-%d %H:%i:%s') as login_time from users limit ${pagesize} offset ${offset}`
+  // );
+
+  const [rows]: [RowDataPacket[], unknown] = await connection.execute(
+    `select *,DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') as create_time,DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s') as update_time,DATE_FORMAT(login_time, '%Y-%m-%d %H:%i:%s') as login_time from users where username like ? and phone like ? limit ${pagesize} offset ${offset}`,
+    [`%${nickname}%`, `%${phone}%`]
+  );
+  const [total]: [RowDataPacket[], unknown] = await connection.execute(
+    "select count(*) as total from users where username like ? and phone like ?",
+    [`%${nickname}%`, `%${phone}%`]
+  );
+  // 去除密码password字段
+  rows.forEach((item: any) => {
+    delete item.password;
+  });
+  console.log("查到的用户", rows);
+  console.log("总条数", total);
+  ctx.body = {
+    status: "success",
+    message: "查询成功",
+    data: {
+      data: rows,
+      total: total[0].total,
+    },
     code: 200,
   };
 
