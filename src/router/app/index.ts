@@ -2,7 +2,7 @@
  * @Author: Yongxin Donald
  * @Date: 2024-03-16 08:36:13
  * @LastEditors: yzt
- * @LastEditTime: 2025-03-25 20:25:57
+ * @LastEditTime: 2025-04-14 21:13:20
  * @FilePath: \fontback\src\router\login\index.ts
  * @Description:
  * Copyright (c) 2024 by Donald/Yongxin, All Rights Reserved.
@@ -20,7 +20,7 @@ import { addIncome, DeleteIncome, incomeList } from "../../db/income";
 import { addPetals, DeletePetals, petalsList, updatePetals } from "../../db/petals";
 import { addProperty, DeleteProperty, propertyList, updateProperty } from "../../db/property";
 import { addLiability, DeleteLiability, liabilityList, updateLiability } from "../../db/liability";
-import { incomeByMonth, totalExpense, totalIncome, totalLiability, totalProperty } from "../../db/home";
+import { addIncomeAndExpenseAndLiability, expenseByMonth, IncomeList, ExpenseList, incomeByMonth, incomeByMonths, totalExpense, totalIncome, totalLiability, totalProperty, updateUserInfo, ExpenseAndIncomeByMonth, ExpenseAndIncomeByMonth2, ExpenseTop3, ExpenseAndIncomeByMonthData } from "../../db/home";
 const app: Koa = new Koa();
 const router: Router = new Router();
 
@@ -28,6 +28,124 @@ app.use(async (ctx: Context, next: Koa.Next) => {
   ctx.body = "-";
   await next();
 });
+
+//--------------------小程序接口----------------
+// 或者支出和收入列表
+router.get("/income/index", async (ctx: Context) => {
+  try {
+    const params: any = ctx.query;
+    console.log("查询参数**", params);
+    await IncomeList(params, ctx);
+  } catch (error) {
+    console.error("err", error);
+    ctx.body = "Internal server error";
+  }
+});
+router.get("/pay/index", async (ctx: Context) => {
+  try {
+    const params: any = ctx.query;
+    console.log("查询参数**", params);
+    await ExpenseList(params, ctx);
+  } catch (error) {
+    console.error("err", error);
+    ctx.body = "Internal server error";
+  }
+});
+
+// 新增支出，收入，负债
+router.post("/income/add", async (ctx: Context) => {
+  try {
+    const params: any = ctx.request.body;
+    console.log("请求的", params);
+    await addIncomeAndExpenseAndLiability(params, ctx);
+  } catch (error) {
+    console.error("err", error);
+    ctx.body = "Internal server error";
+  }
+});
+
+// 本月的支出统计
+router.get("/pay/current-month/pay-total", async (ctx: Context) => {
+  try {
+    const params: any = ctx.query;
+    console.log("查询参数**", params);
+    await expenseByMonth(params, ctx);
+  } catch (error) {
+    console.error("err", error);
+    ctx.body = "Internal server error";
+  }
+});
+// 本月的收入统计
+router.get("/income/current/money-total", async (ctx: Context) => {
+  try {
+    const params: any = ctx.query;
+    console.log("查询参数**", params);
+    await incomeByMonths(params, ctx);
+  } catch (error) {
+    console.error("err", error);
+    ctx.body = "Internal server error";
+  }
+});
+// 修改用户信息
+router.post("/user/update-info", async (ctx: Context) => {
+  try {
+    const params: any = ctx.request.body;
+    console.log("请求的", params);
+    await updateUserInfo(params, ctx);
+  } catch (error) {
+    console.error("err", error);
+    ctx.body = "Internal server error";
+  }
+});
+
+// 统计最近一年的收入和支出，按月份分别统计最近12个月的数据
+router.get("/income/income-expense-month-total", async (ctx: Context) => {
+  try {
+    const query: any = ctx.query;
+    console.log("查询参数**", query);
+
+    await ExpenseAndIncomeByMonth(query, ctx);
+  } catch (error) {
+    console.error("err", error);
+    ctx.body = "Internal server error";
+  }
+});
+// 统计当月的收入、支出、负债、资产
+router.get("/income/income-expense-liability-property-total", async (ctx: Context) => {
+  try {
+    const query: any = ctx.query;
+    console.log("查询参数**", query);
+
+    await ExpenseAndIncomeByMonth2(query, ctx);
+  } catch (error) {
+    console.error("err", error);
+    ctx.body = "Internal server error";
+  }
+})
+// 当月前3的支出
+router.get("/pay/current-month/pay-top-three", async (ctx: Context) => {
+  try {
+    const params: any = ctx.query;
+    console.log("查询参数**", params);
+    await ExpenseTop3(params, ctx);
+  } catch (error) {
+    console.error("err", error);
+    ctx.body = "Internal server error";
+  }
+})
+// 统计本月的收入和支出列表
+router.get("/income/income-expense-list", async (ctx: Context) => {
+  try {
+    const query: any = ctx.query;
+    console.log("查询参数**", query);
+
+    await ExpenseAndIncomeByMonthData(query, ctx);
+  } catch (error) {
+    console.error("err", error);
+    ctx.body = "Internal server error";
+  }
+})
+///======================= app ================
 
 // 新增用户// + 注册用户
 router.post("/user/register", async (ctx: Context) => {

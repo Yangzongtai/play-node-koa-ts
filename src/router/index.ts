@@ -1,8 +1,8 @@
 /*
  * @Author: Yongxin Donald
  * @Date: 2024-03-15 09:16:23
- * @LastEditors: Yongxin Donald
- * @LastEditTime: 2024-03-16 16:54:56
+ * @LastEditors: yzt
+ * @LastEditTime: 2025-03-25 20:28:20
  * @FilePath: \fontback\router\index.ts
  * @Description:
  * Copyright (c) 2024 by Donald/Yongxin, All Rights Reserved.
@@ -14,6 +14,7 @@ const router: Router = new Router();
 import login from "./login";
 import upload from "./upload";
 import admin from "./admin";
+import app from "./app";
 
 router.get("/", async (ctx: Context) => {
   ctx.body = "//";
@@ -21,6 +22,7 @@ router.get("/", async (ctx: Context) => {
 router.use("/login", login.routes());
 router.use("/upload", upload.routes());
 router.use("/admin", admin.routes());
+router.use("/app", app.routes());
 
 // module.exports = router
 export default router;

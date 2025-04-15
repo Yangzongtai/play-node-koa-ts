@@ -2,7 +2,7 @@
  * @Author: Yongxin Donald
  * @Date: 2024-03-16 08:36:13
  * @LastEditors: yzt
- * @LastEditTime: 2025-03-12 21:34:29
+ * @LastEditTime: 2025-03-25 21:33:50
  * @FilePath: \fontback\src\index.ts
  * @Description:
  * Copyright (c) 2024 by Donald/Yongxin, All Rights Reserved.
@@ -28,7 +28,7 @@ app.use(async (ctx: Context, next: Koa.Next) => {
   ctx.set("Access-Control-Allow-Headers", "*");
   // ctx.body = '-'
   console.log("目标", ctx.url);
-  const excludeUrl = ["/login/newregister", "/login/login", "/", "/upload/file",'/^/public/uploads/'];
+  const excludeUrl = ["/login/newregister", "/login/login", "/", "/upload/file", '/^/public/uploads/'];
   if (excludeUrl.includes(ctx.url)) return await next();
   const { status } = verifyToken(ctx.req, ctx.res, next, ctx);
   console.log("stats", status);
@@ -75,9 +75,8 @@ app.use(
         if (file.mimetype == "image/jpeg" || file.mimetype == "image/png") {
           file.filepath = `${dir}/${file.newFilename}`;
         } else {
-          file.filepath = `${dir2}/${
-            file.originalFilename || file.newFilename
-          }`;
+          file.filepath = `${dir2}/${file.originalFilename || file.newFilename
+            }`;
         }
       },
     },
@@ -87,12 +86,12 @@ app.use(
 // 返回上传的文件地址
 app.use(async (ctx: Context, next: Koa.Next) => {
   if (ctx.method === 'POST' && ctx.url === '/upload/file') {
-    
+
     const file = ctx.request.files?.file as any;
     const filename = path.basename(file.filepath);
     const protocol = ctx.request.protocol;
     const host = ctx.request.host;
-    
+
     ctx.body = {
       url: `${protocol}://${host}/uploads/images/${filename}`,
     };
